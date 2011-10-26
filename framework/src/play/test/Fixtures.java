@@ -42,8 +42,6 @@ import javax.persistence.Entity;
 public class Fixtures {
 
     static Pattern keyPattern = Pattern.compile("([^(]+)\\(([^)]+)\\)");
-    // Allows people to clear the cache, so Fixture is not stateful
-    public static Map<String, Object> idCache = new HashMap<String, Object>();
 
     public static void executeSQL(String sqlScript) {
         for(CharSequence sql : new SQLSplitter(sqlScript)) {
@@ -63,7 +61,7 @@ public class Fixtures {
      * @param types Types to delete
      */
     public static void delete(Class<? extends Model>... types) {
-        idCache.clear();
+
         disableForeignKeyConstraints();
         for (Class<? extends Model> type : types) {
             try {
@@ -121,7 +119,6 @@ public class Fixtures {
      */
     public static void deleteDatabase() {
         try {
-            idCache.clear();
             List<String> names = new ArrayList<String>();
             ResultSet rs = DB.getConnection().getMetaData().getTables(null, null, null, new String[]{"TABLE"});
             while (rs.next()) {
@@ -150,7 +147,13 @@ public class Fixtures {
      */
     @Deprecated
     public static void load(String name) {
-        loadModels(name);
+        Map<String, Object> idCache = new HashMap<String, Object>();
+        loadModels(name, idCache);
+    }
+
+    public static void loadModels(String name) {
+        Map<String, Object> idCache = new HashMap<String, Object>();
+        loadModels(name, idCache);
     }
 
     /**
@@ -158,7 +161,7 @@ public class Fixtures {
      * The format of the YAML file is constrained, see the Fixtures manual page
      * @param name Name of a YAML file somewhere in the classpath (or conf/)
      */
-    public static void loadModels(String name) {
+    protected static void loadModels(String name, Map<String, Object> idCache) {
         VirtualFile yamlFile = null;
         try {
             for (VirtualFile vf : Play.javaPath) {
@@ -203,7 +206,7 @@ public class Fixtures {
 
                         @SuppressWarnings("unchecked")
                         Class<Model> cType = (Class<Model>)Play.classloader.loadClass(type);
-                        final Map<String, String[]> resolvedFields = resolveDependencies(cType, fields);
+                        final Map<String, String[]> resolvedFields = resolveDependencies(cType, fields, idCache);
 
                         RootParamNode rootParamNode = ParamNode.convert(resolvedFields);
                         // This is kind of hacky. This basically says that if we have an embedded class we should ignore it.
@@ -249,8 +252,9 @@ public class Fixtures {
      */
     @Deprecated
     public static void load(String... names) {
+        Map<String, Object> idCache = new HashMap<String, Object>();
         for (String name : names) {
-            loadModels(name);
+            loadModels(name, idCache);
         }
     }
 
@@ -258,8 +262,9 @@ public class Fixtures {
      * @see loadModels(String name)
      */
     public static void loadModels(String... names) {
+        Map<String, Object> idCache = new HashMap<String, Object>();
         for (String name : names) {
-            loadModels(name);
+            loadModels(name, idCache);
         }
     }
 
@@ -418,7 +423,7 @@ public class Fixtures {
     /**
      *  Resolve dependencies between objects using their keys. For each referenced objects, it sets the foreign key
      */
-    static Map<String, String[]> resolveDependencies(Class<Model> type, Map<String, String[]> yml) {
+    static Map<String, String[]> resolveDependencies(Class<Model> type, Map<String, String[]> yml, Map<String, Object> idCache) {
 
         // Contains all the fields (object properties) we should look up
         final Set<Field> fields = new HashSet<Field>();
