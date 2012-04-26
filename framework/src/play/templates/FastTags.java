@@ -121,7 +121,7 @@ public class FastTags {
         String id = args.containsKey("id") ? " id=\"" + args.get("id") + "\"" : "";
         String clz = args.containsKey("class") ? " class=\"" + args.get("class") + "\"" : "";
  
-        if (!("GET".equals(actionDef.method) || "POST".equals(actionDef.method))) {
+        if (!("GET".equalsIgnoreCase(actionDef.method) || "POST".equalsIgnoreCase(actionDef.method))) {
             String separator = actionDef.url.indexOf('?') != -1 ? "&" : "?";
             actionDef.url += separator + "x-http-method-override=" + actionDef.method.toUpperCase();
             actionDef.method = "POST";
