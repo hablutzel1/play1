@@ -114,7 +114,7 @@ public class GenericModel extends JPABase {
                                     if (_id.equals("")) {
                                         continue;
                                     }
-                                    Query q = em.createQuery("from " + relation + " where " + keyName + " = ?");
+                                    Query q = em.createQuery("from " + relation + " where " + keyName + " = ?1");
                                     q.setParameter(1, Binder.directBind(rootParamNode.getOriginalKey(), annotations,_id, Model.Manager.factoryFor((Class<Model>) Play.classloader.loadClass(relation)).keyType(), null));
                                     try {
                                         l.add(q.getSingleResult());
@@ -129,7 +129,7 @@ public class GenericModel extends JPABase {
                             String[] ids = fieldParamNode.getChild(keyName, true).getValues();
                             if (ids != null && ids.length > 0 && !ids[0].equals("")) {
 
-                                Query q = em.createQuery("from " + relation + " where " + keyName + " = ?");
+                                Query q = em.createQuery("from " + relation + " where " + keyName + " = ?1");
                                 q.setParameter(1, Binder.directBind(rootParamNode.getOriginalKey(), annotations, ids[0], Model.Manager.factoryFor((Class<Model>) Play.classloader.loadClass(relation)).keyType(), null));
                                 try {
                                     Object to = q.getSingleResult();
@@ -350,6 +350,8 @@ public class GenericModel extends JPABase {
 
         /**
          * Bind a JPQL named parameter to the current query.
+         * Careful, this will also bind count results. This means that Integer get transformed into long 
+         *  so hibernate can do the right thing. Use the setParameter if you just want to set parameters. 
          */
         public JPAQuery bind(String name, Object param) {
             if (param.getClass().isArray()) {
@@ -361,6 +363,14 @@ public class GenericModel extends JPABase {
             query.setParameter(name, param);
             return this;
         }
+
+		/** 
+		 * Set a named parameter for this query.
+		 **/
+  		public JPAQuery setParameter(String name, Object param) {
+			query.setParameter(name, param);
+	        return this;
+		}
 
         /**
          * Retrieve all results of the query
