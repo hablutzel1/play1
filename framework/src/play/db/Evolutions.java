@@ -266,6 +266,13 @@ public class Evolutions extends PlayPlugin {
              for(Entry<String, VirtualFile> moduleRoot : modulesWithEvolutions.entrySet()) {            
                  applyScript(true, moduleRoot.getKey(), moduleRoot.getValue());
              }
+
+            //start to force a call to Play.stop() logic
+            Play.started = true;
+            Play.stop();
+            //end to force a call to Play.stop() logic
+
+
             new Redirect("/").apply(request, response);
             return true;
         }
