@@ -1,6 +1,10 @@
 package play.test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,8 +20,15 @@ import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
+import org.junit.runner.notification.RunNotifier;
+import org.junit.runners.model.TestClass;
+
 import play.Logger;
 import play.Play;
+import play.mvc.Http.Request;
+import play.mvc.Http.Response;
+import play.mvc.Router;
+import play.mvc.Scope.RenderArgs;
 import play.vfs.VirtualFile;
 
 /**
@@ -98,6 +109,68 @@ public class TestEngine {
             }
         }
     }
+    
+    public static void initTest(Class<?> testClass) { 
+        CleanTest cleanTestAnnot = null;
+        if(testClass != null ){
+            cleanTestAnnot = testClass.getAnnotation(CleanTest.class) ;
+        }
+        if(cleanTestAnnot != null && cleanTestAnnot.removeCurrent() == true){
+            if(Request.current != null){
+                Request.current.remove();
+            }
+            if(Response.current != null){
+                Response.current.remove();
+            }
+            if(RenderArgs.current != null){
+                RenderArgs.current.remove();
+            }
+        }
+        if (cleanTestAnnot == null || (cleanTestAnnot != null && cleanTestAnnot.createDefault() == true)) {
+            if (Request.current() == null) {
+                // Use base URL to create a request for this host
+                // host => with port
+                // domain => without port
+                String host = Router.getBaseUrl();
+                String domain = null;
+                Integer port = 80;
+                boolean isSecure = false;
+                if (host == null || host.equals("application.baseUrl")) {
+                    host = "localhost" + port;
+                    domain = "localhost";
+                } else if (host.contains("http://")) {
+                    host = host.replaceAll("http://", "");
+                } else if (host.contains("https://")) {
+                    host = host.replaceAll("https://", "");
+                    port = 443;
+                    isSecure = true;         
+                }
+                int colonPos =  host.indexOf(':');
+                if(colonPos > -1){
+                    domain = host.substring(0, colonPos);
+                    port = Integer.parseInt(host.substring(colonPos+1));
+                }else{
+                   domain = host;
+                }
+                Request request = Request.createRequest(null, "GET", "/", "", null,
+                        null, null, host, false, port, domain, isSecure, null, null);
+                request.body = new ByteArrayInputStream(new byte[0]);
+                Request.current.set(request);
+            }
+
+            if (Response.current() == null) {
+                Response response = new Response();
+                response.out = new ByteArrayOutputStream();
+                response.direct = null;
+                Response.current.set(response);
+            }
+
+            if (RenderArgs.current() == null) {
+                RenderArgs renderArgs = new RenderArgs();
+                RenderArgs.current.set(renderArgs);
+            }
+        }
+    }
 
     @SuppressWarnings("unchecked")
     public static TestResults run(final String name) {
@@ -106,7 +179,9 @@ public class TestEngine {
         try {
             // Load test class
             final Class testClass = Play.classloader.loadClass(name);
-
+                 
+            initTest(testClass);
+            
             TestResults pluginTestResults = Play.pluginCollection.runTest(testClass);
             if (pluginTestResults != null) {
                 return pluginTestResults;

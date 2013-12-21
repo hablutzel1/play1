@@ -164,9 +164,12 @@ def run(app, args):
 
 def clean(app):
     app.check()
-    print "~ Deleting %s" % os.path.normpath(os.path.join(app.path, 'tmp'))
-    if os.path.exists(os.path.join(app.path, 'tmp')):
-        shutil.rmtree(os.path.join(app.path, 'tmp'))
+    tmp = app.readConf('play.tmp')
+    if tmp is None or not tmp.strip():
+        tmp = 'tmp'
+    print "~ Deleting %s" % os.path.normpath(os.path.join(app.path, tmp))
+    if os.path.exists(os.path.join(app.path, tmp)):
+        shutil.rmtree(os.path.join(app.path, tmp))
     print "~"
 
 def show_modules(app, args):
@@ -250,7 +253,7 @@ def autotest(app, args):
         line = soutint.readline().strip()
         if line:
             print line
-            if line.find('Go to ') > -1: # This line is written out by the test runner to system.out and is not log file dependent
+            if line.find('Server is up and running') > -1: # This line is written out by Server.java to system.out and is not log file dependent
                 soutint.close()
                 break
 
