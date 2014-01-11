@@ -9,6 +9,7 @@ import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.frame.TooLongFrameException;
 import org.jboss.netty.handler.codec.http.*;
 import org.jboss.netty.handler.codec.http.websocketx.*;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.handler.stream.ChunkedFile;
 import org.jboss.netty.handler.stream.ChunkedInput;
 import org.jboss.netty.handler.stream.ChunkedStream;
@@ -35,12 +36,15 @@ import play.utils.HTTP;
 import play.utils.Utils;
 import play.vfs.VirtualFile;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
 import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -245,6 +249,18 @@ public class PlayHandler extends SimpleChannelUpstreamHandler {
                     // Ignore
                 }
                 return;
+            }
+
+            SslHandler sslHandler = ctx.getPipeline().get(SslHandler.class);
+            if (sslHandler != null){ // only for https requests
+                SSLSession sslSession = sslHandler.getEngine().getSession();
+                Certificate[] peerCertificates = null;
+                try {
+                    peerCertificates = sslSession.getPeerCertificates();
+                } catch (SSLPeerUnverifiedException e) {
+                    // no client cert
+                }
+                request.args.put("__SSL_PEER_CERTS", peerCertificates);
             }
 
             // Check the exceeded size before re rendering so we can render the error if the size is exceeded
