@@ -252,6 +252,7 @@ public class PlayHandler extends SimpleChannelUpstreamHandler {
                 return;
             }
 
+            // TODO check the possibility to replace this patch by a custom class in play.netty.pipeline configuration
             SslHandler sslHandler = ctx.getPipeline().get(SslHandler.class);
             if (sslHandler != null){ // only for https requests
                 SSLSession sslSession = sslHandler.getEngine().getSession();
