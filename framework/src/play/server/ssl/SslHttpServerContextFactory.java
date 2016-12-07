@@ -6,6 +6,7 @@ import org.bouncycastle.openssl.PasswordFinder;
 import play.Logger;
 import play.Play;
 
+import java.io.File;
 import java.security.cert.X509Certificate;
 import javax.net.ssl.*;
 import java.io.FileInputStream;
@@ -50,7 +51,14 @@ public class SslHttpServerContextFactory {
                 ks = KeyStore.getInstance(p.getProperty("keystore.algorithm", "JKS"));
                 // Load the file from the conf
                 char[] certificatePassword = p.getProperty("keystore.password", "secret").toCharArray();
-                ks.load(new FileInputStream(Play.getFile(p.getProperty("keystore.file", "conf/certificate.jks"))),
+
+                // If 'keystore.file' is an absolute path do not prepend Play.applicationPath.
+                String keystoreFileProperty = p.getProperty("keystore.file", "conf/certificate.jks");
+                File keystoreFile = new File(keystoreFileProperty);
+                if (!keystoreFile.isAbsolute()) {
+                    keystoreFile = Play.getFile(keystoreFileProperty);
+                }
+                ks.load(new FileInputStream(keystoreFile),
                         certificatePassword);
 
                 // Set up key manager factory to use our key store
