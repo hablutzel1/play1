@@ -223,6 +223,7 @@ public class Scope {
 
         public String getAuthenticityToken() {
             if (!data.containsKey(AT_KEY)) {
+                // TODO research: why is the random UUID signed?.
                 data.put(AT_KEY, Crypto.sign(UUID.randomUUID().toString()));
             }
             return data.get(AT_KEY);

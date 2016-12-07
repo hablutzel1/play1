@@ -363,9 +363,15 @@ public class Play {
     private static Properties readOneConfigurationFile(String filename) {
         Properties propsFromFile=null;
 
-        VirtualFile appRoot = VirtualFile.open(applicationPath);
-        
-        VirtualFile conf = appRoot.child("conf/" + filename);
+        VirtualFile conf;
+        if (!new File(filename).isAbsolute()) {
+            VirtualFile appRoot = VirtualFile.open(applicationPath);
+
+            conf = appRoot.child("conf/" + filename);
+        } else {
+            conf = VirtualFile.open(filename);
+        }
+
         if (confs.contains(conf)) {
             throw new RuntimeException("Detected recursive @include usage. Have seen the file " + filename + " before");
         }

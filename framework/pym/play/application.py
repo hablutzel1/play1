@@ -303,7 +303,10 @@ class PlayConfParser:
             self.entries['http.port'] = env['http.port']
 
     def readFile(self, confFolder, filename):
-        f = file(confFolder + filename)
+        if not os.path.isabs(filename):
+            f = file(confFolder + filename)
+        else:
+            f = file(filename)
         result = dict()
         for line in f:
             linedef = line.strip()
@@ -379,6 +382,10 @@ class PlayConfParser:
             key = match.group(1)
             if key == 'play.id':
                 return self.id
+            # supporting 'user.home' as we allow directives like '@include.foobar=${user.home}/external.conf' in application.conf.
+            if key == 'user.home':
+                from os.path import expanduser
+                return expanduser("~")
             else: # unkonwn
                 return '${%s}' % key
 

@@ -14,6 +14,7 @@ public class Secure extends Controller {
     @Before(unless={"login", "authenticate", "logout"})
     static void checkAccess() throws Throwable {
         // Authent
+        // TODO research: what happens if someone saves an old 'PLAY_SESSION' cookie (where the "username" attribute was still set) and use it even after a logout? it will be considered valid isn't it? is there any default session expiration/invalidation concept around?.
         if(!session.contains("username")) {
             flash.put("url", "GET".equals(request.method) ? request.url : Play.ctxPath + "/"); // seems a good default
             login();
@@ -86,7 +87,8 @@ public class Secure extends Controller {
         // Remember if needed
         if(remember) {
             Date expiration = new Date();
-            String duration = Play.configuration.getProperty("secure.rememberme.duration","30d"); 
+            String duration = Play.configuration.getProperty("secure.rememberme.duration","30d");
+            // FIXME "Time.parseDuration(duration) * 1000" could get to be a negative value (e.g. -1702967296) with the default secure.rememberme.duration, i.e. 30d. so the remember me won't work at all as it will be in the past.
             expiration.setTime(expiration.getTime() + Time.parseDuration(duration) * 1000 );
             response.setCookie("rememberme", Crypto.sign(username + "-" + expiration.getTime()) + "-" + username + "-" + expiration.getTime(), duration);
 

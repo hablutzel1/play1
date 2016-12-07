@@ -56,6 +56,7 @@ public class SslPlayHandler extends PlayHandler {
             ChannelFuture writeFuture = ctx.getChannel().write(nettyResponse);
             writeFuture.addListener(ChannelFutureListener.CLOSE);
         } else {
+            // TODO check: here we could receive "java.io.IOException: Se ha anulado una conexión establecida por el software en su equipo host." or "java.nio.channels.ClosedChannelException". Wouldn't it be better to log them as a WARN as they happened because of a problem from the client side (confirm it)?. Study the standard meaning of log levels (from log4j maybe) and determine if there is actually a safe way to discriminate these exceptions and log them with WARN level.
             Logger.error(e.getCause(), "");
             e.getChannel().close();
         }
