@@ -2,6 +2,7 @@ package play;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -68,10 +69,15 @@ public class Logger {
             PropertyConfigurator.configure(shutUp);
         } else if (Logger.log4j == null) {
 
-            if (log4jConf.getFile().indexOf(Play.applicationPath.getAbsolutePath()) == 0) {
-                // The log4j configuration file is located somewhere in the application folder,
-                // so it's probably a custom configuration file
-                configuredManually = true;
+            // A prospective fix for #1893.
+            try {
+                if (log4jConf.getFile().indexOf(Play.applicationPath.toURI().toURL().getFile()) == 0) {
+                        // The log4j configuration file is located somewhere in the application folder,
+                    // so it's probably a custom configuration file
+                    configuredManually = true;
+                }
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
             }
             if (isXMLConfig) {
                 DOMConfigurator.configure(log4jConf);
