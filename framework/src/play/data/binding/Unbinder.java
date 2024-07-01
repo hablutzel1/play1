@@ -40,9 +40,13 @@ public class Unbinder {
             if (!result.containsKey(name)) {
                 result.put(name, src != null ? src.toString() : null);
             } else {
-                @SuppressWarnings("unchecked")
-                List<Object> objects = (List<Object>) result.get(name);
-                objects.add(src != null ? src.toString() : null);
+                Object firstValue = result.get(name);
+                if (!Collection.class.isAssignableFrom((firstValue.getClass()))) {
+                    ArrayList values = new ArrayList();
+                    result.put(name, values);
+                    values.add(firstValue);
+                }
+                ((List)result.get(name)).add(src != null ? src.toString() : null);
             }
         } else if (src.getClass().isArray()) {
             List<Object> objects = new ArrayList<Object>();
