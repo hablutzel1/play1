@@ -48,3 +48,13 @@ Please report bugs on "our lighthouse tracker":http://play.lighthouseapp.com/pro
 h2. Licence
 
 Play framework is distributed under "Apache 2 licence":http://www.apache.org/licenses/LICENSE-2.0.html.
+
+h2. Problems
+
+Can be built with C:\Program Files (x86)\Java\jdk1.6.0_25 and it looks like it is possible with former Java 7 releases, but with jdk1.7.0_76 (64 bits) it is not possible to build it anymore, the exception got is the following:
+
+[javac] E:\d\play\play1.2.x_jh_fork\framework\src\play\db\DBPlugin.java:310: error: ProxyDriver is not abstract and does not override abstract method getParentLogger() in Driver
+[javac]     public static class ProxyDriver implements Driver {
+[javac]                   ^
+
+TODO maybe it is fixed in a newer Play 1.2.x stable release, e.g 1.3 :D
